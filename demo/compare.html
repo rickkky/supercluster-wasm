@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>supercluster-wasm compare — wasm-worker vs js / wasm / js-worker</title>
+  <link rel="stylesheet" href="../node_modules/ol/ol.css" />
+  <style>
+    html, body { margin: 0; height: 100%; font: 13px/1.4 system-ui, sans-serif; }
+    #maps { position: absolute; inset: 0; display: flex; }
+    .pane { position: relative; flex: 1 1 50%; }
+    .pane .map { position: absolute; inset: 0; }
+    .pane + .pane { border-left: 2px solid #333; }
+    .pane .tag {
+      position: absolute; top: 8px; left: 8px; z-index: 5;
+      background: rgba(255,255,255,0.92); border-radius: 4px;
+      padding: 3px 8px; font-weight: 600; font-size: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .pane .hud {
+      position: absolute; top: 34px; left: 8px; z-index: 5;
+      background: rgba(255,255,255,0.92); border-radius: 4px;
+      padding: 4px 8px; font-family: ui-monospace, monospace; font-size: 11px;
+      white-space: pre-line; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      min-width: 180px;
+    }
+    #panel {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 10;
+      background: rgba(255,255,255,0.95); border-radius: 6px;
+      padding: 8px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;
+      max-width: 92vw;
+    }
+    #panel .ctl { display: flex; flex-direction: column; gap: 2px; }
+    #panel label { color: #444; font-size: 11px; }
+    #panel select, #panel button { padding: 4px; }
+    #panel button { cursor: pointer; }
+    #panel button:disabled { cursor: not-allowed; opacity: 0.5; }
+    #panel .brand { font-weight: 600; font-size: 12px; align-self: center; }
+    #panel .brand a { color: inherit; }
+    #compare-panel {
+      position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 10;
+      background: rgba(255,255,255,0.92); border-radius: 6px;
+      padding: 6px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      font-family: ui-monospace, monospace; font-size: 11px;
+      white-space: pre; text-align: center; color: #222;
+    }
+  </style>
+</head>
+<body>
+  <div id="maps">
+    <div class="pane">
+      <div class="map" id="map-left"></div>
+      <div class="tag">wasm-worker (coords fast path)</div>
+      <div class="hud" id="hud-left">idle — load a dataset</div>
+    </div>
+    <div class="pane">
+      <div class="map" id="map-right"></div>
+      <div class="tag" id="tag-right">js (main thread)</div>
+      <div class="hud" id="hud-right">idle — load a dataset</div>
+    </div>
+  </div>
+  <div id="compare-panel"></div>
+  <div id="panel">
+    <span class="brand"><a href="./" title="back to the single-map demo">compare</a></span>
+    <div class="ctl">
+      <label for="size">Dataset</label>
+      <select id="size">
+        <option value="100000">100k</option>
+        <option value="500000" selected>500k</option>
+        <option value="1000000">1M</option>
+        <option value="5000000">5M</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <label for="engine">Right engine</label>
+      <select id="engine">
+        <option value="js" selected>js direct (main thread)</option>
+        <option value="js-worker">js-worker</option>
+        <option value="wasm">wasm ffi (main thread)</option>
+        <option value="wasm-worker-geojson">wasm-worker (geojson)</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <label for="radius">Radius (px)</label>
+      <select id="radius">
+        <option value="20">20</option>
+        <option value="40">40</option>
+        <option value="60" selected>60</option>
+        <option value="80">80</option>
+        <option value="160">160</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <label for="max-zoom">Max zoom</label>
+      <select id="max-zoom">
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="8">8</option>
+        <option value="10">10</option>
+        <option value="12" selected>12</option>
+        <option value="14">14</option>
+        <option value="16">16</option>
+        <option value="18">18</option>
+      </select>
+    </div>
+    <button id="reload">Load</button>
+  </div>
+  <script type="importmap">
+    {
+      "imports": {
+        "ol/": "/node_modules/ol/",
+        "rbush": "/node_modules/.pnpm/rbush@4.0.1/node_modules/rbush/index.js",
+        "quickselect": "/node_modules/.pnpm/quickselect@3.0.0/node_modules/quickselect/index.js",
+        "supercluster": "/node_modules/supercluster/index.js",
+        "kdbush": "/node_modules/.pnpm/kdbush@4.1.0/node_modules/kdbush/index.js"
+      }
+    }
+  </script>
+  <script type="module" src="./compare.js"></script>
+</body>
+</html>

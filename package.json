@@ -1,0 +1,29 @@
+{
+  "name": "supercluster-wasm",
+  "version": "0.0.0",
+  "description": "A WASM-compiled Rust library for geospatial point clustering in the browser.",
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@10.34.6",
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\" \"bench/oracle/self-verify.js\"",
+    "test:single": "node --test",
+    "bench:baseline": "node --max-old-space-size=8192 bench/baseline/run.js",
+    "bench:js": "node --max-old-space-size=8192 bench/js/run.js",
+    "bench:wasm": "node --max-old-space-size=8192 bench/wasm/run.js",
+    "bench:compare": "node --max-old-space-size=8192 bench/compare/run.js",
+    "bench:attribution": "node --max-old-space-size=8192 bench/attribution/run.js",
+    "oracle:self-verify": "node bench/oracle/self-verify.js",
+    "oracle:capture": "node bench/oracle/capture-membership.js",
+    "oracle:capture:aggregates": "node bench/oracle/capture-aggregates.js",
+    "oracle:1m": "node --max-old-space-size=8192 bench/oracle/oracle-1m.js",
+    "oracle:1m-rust": "cargo build --manifest-path crates/supercluster/Cargo.toml --release --features fixture --bin dump-membership && node --max-old-space-size=8192 bench/oracle/oracle-1m-rust.js",
+    "wasm:build": "wasm-pack build crates/supercluster --target web --out-dir ../../pkg --features wasm",
+    "wasm:test": "cargo test --manifest-path crates/supercluster/Cargo.toml --features wasm --target wasm32-unknown-unknown --test wasm_boundary",
+    "demo": "node demo/serve.mjs"
+  },
+  "devDependencies": {
+    "ol": "^10.0.0",
+    "supercluster": "^8.0.1"
+  }
+}

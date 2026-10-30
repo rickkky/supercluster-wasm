@@ -1,0 +1,45 @@
+#ISC License
+
+Copyright (c) 2024, Mapbox
+
+The `places.json` fixture in this directory is derived from the
+`places.json` test fixture shipped with the JavaScript `supercluster` library
+(https://github.com/mapbox/supercluster), which is ISC-licensed
+("© Mapbox"). It contains 163 real geographic populated-place coordinates and
+is used here as the oracle seed corpus, per the project spec
+("Bring in the `places.json` fixture (163 real geographic Points, ISC-licensed)
+with attribution as the oracle seed corpus").
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+---
+
+# centers.json
+
+`centers.json` is derived from `places.json` (above): it is the subset of
+`places.json` features that carry a Point geometry (the 162 coordinate-bearing
+features, dropping the "Null Island" sentinel with `geometry: null`). It is
+used as the sampling-center corpus for the clustered-synthetic dataset
+generator.
+
+The spec names "Natural Earth populated-places city coordinates" as the
+intended center corpus. `places.json` is a Natural Earth-derived fixture, but
+its features are capes, islands, waterfalls, and poles — not literally
+populated places. `centers.json` is therefore a **stand-in** for the
+spec's named corpus: it supplies real, spread-out, Natural Earth-derived
+coordinates as Gaussian-sampling centers, which is what the clustered-realistic
+dataset shape requires. The `scalerank` field is reused as a prominence proxy
+for population-weighted sampling; for non-city features this is a prominence
+rank rather than a true population proxy, which the spec's wording does not
+perfectly match. This substitution is recorded here rather than silently
+conflating the two data sources the spec names.

@@ -1,0 +1,67 @@
+[package]
+name = "supercluster"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Build half of the supercluster-WASM clustering stack: GeoJSON Point ingestion, f32 spherical-mercator projection, SoA Cluster Lattice construction, and the per-zoom radius-query clustering loop. Semantic-equivalent to JS supercluster's cluster membership."
+
+[lib]
+path = "src/lib.rs"
+# `cdylib` for `wasm-pack build` (ticket 07); `rlib` so the native integration
+# tests and the `dump-membership` binary still link the crate as a normal Rust
+# lib. The `cdylib` artifact on a native build is unused but harmless.
+crate-type = ["cdylib", "rlib"]
+
+# On-demand membership dumper (ticket 04, option B of the oracle). Builds the
+# Rust index over a CLI-specified dataset and emits per-zoom membership as JSON
+# for the JS cross-diff driver (`bench/oracle/oracle-1m-rust.js`). Requires the
+# `fixture` feature (for `serde_json` and the gated `datasets` generators); not
+# built by default so `cargo build` stays serde-free.
+[[bin]]
+name = "dump-membership"
+path = "src/bin/dump_membership.rs"
+required-features = ["fixture"]
+
+# Tier 2 (ticket 07): the `wasm-bindgen` boundary contract tests. Lives in a
+# dedicated integration-test file (not an inline `mod tests`) because
+# `wasm-bindgen-test` only collects `#[wasm_bindgen_test]` functions at the
+# crate root or in a `pub mod` — a private inline test module registers zero
+# tests with the harness. `required-features = ["wasm"]` keeps this file from
+# compiling under the plain native `cargo test` run (Tier 1), which would
+# otherwise fail to resolve `wasm-bindgen-test`/`web-sys`.
+[[test]]
+name = "wasm_boundary"
+path = "tests/wasm_boundary.rs"
+required-features = ["wasm"]
+
+[features]
+# Enables JSON fixture load/dump (`MembershipFixture::from_json`/`to_json`) and
+# the seeded dataset generators, for the on-demand `dump-membership` binary.
+# Off by default so the release library has no `serde_json` dependency; the
+# integration tests get the same code via `cfg(test)`.
+fixture = ["serde_json"]
+# Enables the `wasm-bindgen` boundary (ticket 07): the `SuperclusterWasm` FFI
+# wrapper in `src/wasm.rs` and its `wasm-bindgen-test` suite. Off by default so
+# native builds (integration tests, `dump-membership`) stay pure-Rust and
+# serde-free; `wasm-pack build/test --features wasm` turns it on. Gating
+# `wasm-bindgen-test` here (rather than as an unconditional dev-dep) keeps plain
+# `cargo test` (Tier 1, the pure-Rust encoder) from resolving `web-sys` at all.
+wasm = ["wasm-bindgen", "js-sys", "wasm-bindgen-test"]
+
+[dependencies]
+kdbush = { path = "../kdbush" }
+serde_json = { version = "1", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
+js-sys = { version = "0.3", optional = true }
+# `wasm-bindgen-test` is an optional *normal* dep (Cargo forbids optional
+# dev-deps), gated by the `wasm` feature. It's only ever compiled under
+# `wasm-pack test` (test profile), so it behaves as a dev-dep in practice.
+# Gating it here keeps plain `cargo test` (Tier 1, the pure-Rust encoder) from
+# resolving `web-sys` at all. Pinned to 0.3.x to match the
+# `wasm-bindgen-cli 0.2.127` test-runner's discovery format (the 0.2.x macro
+# emits `__wbg_test_*` exports the 0.2.127 runner no longer scans for).
+wasm-bindgen-test = { version = "0.3", optional = true }
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

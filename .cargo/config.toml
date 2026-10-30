@@ -1,0 +1,14 @@
+# Drive `cargo test --target wasm32-unknown-unknown` through the
+# `wasm-bindgen-test-runner` binary (installed via `cargo install wasm-bindgen-cli
+# --version 0.2.127`, matching the `wasm-bindgen` version the crate resolves).
+# The runner parses the test wasm, discovers the `#[no_mangle] __wbg_test_*`
+# exports that `#[wasm_bindgen_test]` emits, and executes them in node by
+# default (`wasm-pack test --chrome` switches the harness to a headless
+# browser, but wasm-pack 0.14.0 does not intercept the default harness on this
+# setup, so the runner is wired here directly). Without this, cargo's default
+# test harness finds zero `#[test]` functions (the `wasm_bindgen_test`
+# attribute is not `#[test]`), short-circuits with "no tests to run", and never
+# invokes the runner. See `wasm-bindgen-test-0.2.50/src/rt/mod.rs` for the
+# full flow.
+[target.wasm32-unknown-unknown]
+runner = "wasm-bindgen-test-runner"

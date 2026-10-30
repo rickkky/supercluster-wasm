@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>supercluster-wasm demo</title>
+  <link rel="stylesheet" href="../node_modules/ol/ol.css" />
+  <style>
+    html, body { margin: 0; height: 100%; font: 13px/1.4 system-ui, sans-serif; }
+    #map { position: absolute; inset: 0; }
+    #panel {
+      position: absolute; top: 8px; left: 8px; z-index: 10;
+      background: rgba(255, 255, 255, 0.95); border-radius: 6px;
+      padding: 10px 12px; width: 300px; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    #panel h1 { font-size: 14px; margin: 0 0 8px; }
+    #panel label { display: block; margin: 6px 0 2px; color: #444; }
+    #panel select, #panel button { width: 100%; padding: 4px; box-sizing: border-box; }
+    #panel button { margin-top: 4px; cursor: pointer; }
+    #panel button:disabled { cursor: not-allowed; opacity: 0.5; }
+    #hint { color: #666; font-size: 11px; min-height: 14px; margin-top: 2px;
+            font-style: italic; }
+    #hud { margin-top: 8px; border-top: 1px solid #ddd; padding-top: 6px;
+           font-family: ui-monospace, monospace; font-size: 11px; white-space: pre-line; }
+    #drill { margin-top: 8px; border-top: 1px solid #ddd; padding-top: 6px;
+             font-family: ui-monospace, monospace; font-size: 11px; white-space: pre-line;
+             max-height: 160px; overflow-y: auto; }
+    .busy { color: #888; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="panel">
+    <h1>supercluster-wasm demo</h1>
+
+    <label for="size">Dataset</label>
+    <select id="size">
+      <option value="100000">100k points</option>
+      <option value="500000" selected>500k points</option>
+      <option value="1000000">1M points</option>
+      <option value="5000000">5M points</option>
+    </select>
+
+    <label for="build-path">Build path</label>
+    <select id="build-path">
+      <option value="coords" selected>load_coords (fast, transferred)</option>
+      <option value="geojson">load (GeoJSON)</option>
+    </select>
+
+    <label for="query-path">Query path</label>
+    <select id="query-path">
+      <option value="clusters" selected>getClusters (encoded)</option>
+      <option value="ids">getClustersIds (hybrid ids)</option>
+    </select>
+    <div id="hint"></div>
+
+    <label for="radius">Cluster radius (px)</label>
+    <select id="radius">
+      <option value="20">20</option>
+      <option value="40">40</option>
+      <option value="60" selected>60</option>
+      <option value="80">80</option>
+      <option value="160">160</option>
+    </select>
+
+    <label for="max-zoom">Max cluster zoom</label>
+    <select id="max-zoom">
+      <option value="4">4</option>
+      <option value="6">6</option>
+      <option value="8">8</option>
+      <option value="10">10</option>
+      <option value="12" selected>12</option>
+      <option value="14">14</option>
+      <option value="16">16</option>
+      <option value="18">18</option>
+    </select>
+    <div id="max-zoom-hint" style="color:#666; font-size:11px;">above this zoom: raw points, no clustering</div>
+
+    <button id="reload">Load dataset</button>
+
+    <div id="hud">idle — load a dataset</div>
+    <div id="drill"></div>
+  </div>
+  <script type="importmap">
+    {
+      "imports": {
+        "ol/": "/node_modules/ol/",
+        "rbush": "/node_modules/.pnpm/rbush@4.0.1/node_modules/rbush/index.js",
+        "quickselect": "/node_modules/.pnpm/quickselect@3.0.0/node_modules/quickselect/index.js"
+      }
+    }
+  </script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>supercluster-wasm — browser smoke (ticket 07)</title>
+</head>
+<body>
+  <h1>supercluster-wasm browser smoke</h1>
+  <pre id="out">booting…</pre>
+
+  <!-- Tier 4 (ticket 07): browser E2E smoke. NOT wired into CI (Tiers 1–3 are
+       the committed gate). Driven via chrome-devtools/Playwright MCP: serve
+       the repo root, navigate here, wait for "ready", then read window.__results.
+       Imports the main-thread wrapper (js/index.js), which spins up the
+       module worker (js/worker.js) that loads the wasm-pack output (pkg/). -->
+  <script type="module">
+    import { Supercluster } from '../js/index.js';
+
+    const out = document.getElementById('out');
+    const log = (s) => { out.textContent += '\n' + s; };
+
+    const results = { ready: false, load: false, queries: {}, errors: [] };
+    window.__results = results;
+
+    async function run() {
+      try {
+        const sc = new Supercluster();
+        await sc.ready;
+        results.ready = true;
+        log('worker ready');
+
+        const resp = await fetch('../bench/fixtures/places.json');
+        const fc = await resp.json();
+        await sc.load(fc, { maxZoom: 6, radius: 40, extent: 512 });
+        results.load = true;
+        results.featureCount = fc.features.length;
+        log(`loaded ${fc.features.length} features`);
+
+        // Zoom 0 viewport — everything. Expect at least one cluster + points.
+        const z0 = await sc.getClusters([-180, -90, 180, 90], 0);
+        results.queries.z0 = { count: z0.length, hasCluster: z0.some(f => f.properties?.cluster), hasPoint: z0.some(f => !f.properties?.cluster) };
+        log(`z0: ${z0.length} features, cluster=${results.queries.z0.hasCluster}, point=${results.queries.z0.hasPoint}`);
+
+        // Find a cluster and drill into it.
+        const cluster = z0.find(f => f.properties?.cluster);
+        if (cluster) {
+          const cid = cluster.properties.cluster_id;
+          const children = await sc.getChildren(cid);
+          results.queries.getChildren = { count: children.length };
+          log(`getChildren(${cid}): ${children.length}`);
+
+          const expZoom = await sc.getClusterExpansionZoom(cid);
+          results.queries.expansionZoom = expZoom;
+          log(`getClusterExpansionZoom(${cid}): ${expZoom}`);
+
+          const leaves = await sc.getLeaves(cid);
+          results.queries.getLeaves = { count: leaves.length };
+          log(`getLeaves(${cid}): ${leaves.length}`);
+        }
+
+        results.ok = true;
+        log('SMOKE OK');
+      } catch (err) {
+        results.errors.push(String(err && err.message || err));
+        results.ok = false;
+        log('SMOKE ERROR: ' + (err && err.message || err));
+        console.error(err);
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
